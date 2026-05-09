@@ -1,0 +1,236 @@
+{
+	"info": {
+		"name": "RateDoctor API Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Suggest Departments",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const testDept = { name: \"QA Automation Dept \" + Date.now(), description: \"Test\" };",
+							"pm.sendRequest({",
+							"    url: pm.variables.get(\"baseUrl\") + '/api/v1/departments',",
+							"    method: 'POST',",
+							"    header: { 'Content-Type': 'application/json' },",
+							"    body: { mode: 'raw', raw: JSON.stringify(testDept) }",
+							"}, function (err, res) {",
+							"    if(res && res.json()) {",
+							"        pm.collectionVariables.set(\"testDeptName\", testDept.name);",
+							"        pm.collectionVariables.set(\"testDeptId\", res.json().id);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Suggested department is in the response\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    const deptName = pm.collectionVariables.get(\"testDeptName\");",
+							"    const found = jsonData.data && jsonData.data.some(dept => dept.name === deptName);",
+							"    pm.expect(found).to.be.true;",
+							"});",
+							"",
+							"const deptId = pm.collectionVariables.get(\"testDeptId\");",
+							"if (deptId) {",
+							"    pm.sendRequest({",
+							"        url: pm.variables.get(\"baseUrl\") + '/api/v1/departments/' + deptId,",
+							"        method: 'DELETE'",
+							"    }, function (err, res) {",
+							"        pm.collectionVariables.unset(\"testDeptName\");",
+							"        pm.collectionVariables.unset(\"testDeptId\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/departments/suggest?q={{testDeptName}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"departments",
+						"suggest"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "{{testDeptName}}"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "List Hospitals",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const testHospital = { name: \"QA General Hospital \" + Date.now(), location: \"Test City\" };",
+							"pm.sendRequest({",
+							"    url: pm.variables.get(\"baseUrl\") + '/api/v1/hospitals',",
+							"    method: 'POST',",
+							"    header: { 'Content-Type': 'application/json' },",
+							"    body: { mode: 'raw', raw: JSON.stringify(testHospital) }",
+							"}, function (err, res) {",
+							"    if(res && res.json()) {",
+							"        pm.collectionVariables.set(\"testHospitalId\", res.json().id);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Returns an array of hospitals\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});",
+							"",
+							"const hospitalId = pm.collectionVariables.get(\"testHospitalId\");",
+							"if (hospitalId) {",
+							"    pm.sendRequest({",
+							"        url: pm.variables.get(\"baseUrl\") + '/api/v1/hospitals/' + hospitalId,",
+							"        method: 'DELETE'",
+							"    }, function (err, res) {",
+							"        pm.collectionVariables.unset(\"testHospitalId\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/hospitals",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"hospitals"
+					]
+				}
+			}
+		},
+		{
+			"name": "Approve Doctor",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const testDoctor = { name: \"Dr. QA Auto\", specialty: \"Testing\", status: \"pending\" };",
+							"pm.sendRequest({",
+							"    url: pm.variables.get(\"baseUrl\") + '/api/v1/doctors',",
+							"    method: 'POST',",
+							"    header: { 'Content-Type': 'application/json' },",
+							"    body: { mode: 'raw', raw: JSON.stringify(testDoctor) }",
+							"}, function (err, res) {",
+							"    if(res && res.json()) {",
+							"        pm.collectionVariables.set(\"testDoctorSlug\", res.json().slug);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Doctor status is updated to approved\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"approved\");",
+							"});",
+							"",
+							"const slug = pm.collectionVariables.get(\"testDoctorSlug\");",
+							"if (slug) {",
+							"    pm.sendRequest({",
+							"        url: pm.variables.get(\"baseUrl\") + '/api/v1/doctors/' + slug,",
+							"        method: 'DELETE'",
+							"    }, function (err, res) {",
+							"        pm.collectionVariables.unset(\"testDoctorSlug\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/doctors/{{testDoctorSlug}}/approve",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"doctors",
+						"{{testDoctorSlug}}",
+						"approve"
+					]
+				}
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://159.89.231.16:3000",
+			"type": "string"
+		},
+		{
+			"key": "testDeptName",
+			"value": ""
+		},
+		{
+			"key": "testDeptId",
+			"value": ""
+		},
+		{
+			"key": "testHospitalId",
+			"value": ""
+		},
+		{
+			"key": "testDoctorSlug",
+			"value": ""
+		}
+	]
+}
